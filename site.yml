@@ -1,17 +1,34 @@
 ---
-
+    
 - hosts: tag_app_k3s
   gather_facts: yes
   become: yes
+  pre_tasks:
+    - name: remove known_hosts file
+      file:
+        path: /root/.ssh/known_hosts
+        state: absent
+      delegate_to: localhost
   roles:
     - role: prereq
     - role: download
     - role: raspberrypi
 
+- hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: remove known_hosts file
+      file:
+        path: /root/.ssh/known_hosts
+        state: absent
+      delegate_to: localhost
+  
+
 - hosts: tag_role_master
   become: yes
   roles:
     - role: k3s/master
+
 
 - hosts: tag_role_worker-1
   become: yes
@@ -23,3 +40,22 @@
   roles:
     - role: k3s/node
 
+- hosts: tag_role_master
+  tasks:
+    - name: kubectl apply hello world
+      shell: kubectl apply -f https://k8s.io/examples/service/load-balancer-example.yaml
+      ignore_errors: yes
+      #pending to add when not existing condition (it fails if is already applied)
+
+    - name: kubectl apply hello world
+      shell: kubectl expose deployment hello-world --type=LoadBalancer --name=my-service
+      ignore_errors: yes
+      #pending to add when not existing condition (it fails if is already exposed)
+
+    - name: set service endpoint
+      set_stats: 
+        data:
+          master_endpoint: "{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}"
+          worker_1_endpoint: "{{ hostvars[groups['tag_role_worker-1'][0]]['ansible_host']  }}"
+          worker_2_endpoint: "{{ hostvars[groups['tag_role_worker-2'][0]]['ansible_host']  }}"
+          hello_world_service_endpoint: "http://{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}:8080"
