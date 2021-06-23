@@ -44,6 +44,10 @@
     path: /var/lib/rancher/k3s/server
     mode: "{{ p.stat.mode }}"
 
+- name: Debug ansible_user
+  debug:
+    msg: "{{ ansible_user }}"
+
 - name: Create directory .kube
   file:
     path: ~{{ ansible_user }}/.kube
