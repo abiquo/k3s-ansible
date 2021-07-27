@@ -52,10 +52,16 @@
       ignore_errors: yes
       #pending to add when not existing condition (it fails if is already exposed)
 
+    - name: get content of ~/.kube/config
+      slurp:
+        src: "~/.kube/config"
+      register: creds_config_encoded_file
+
     - name: set service endpoint
       set_stats: 
         data:
-          master_endpoint: "{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}"
-          worker_1_endpoint: "{{ hostvars[groups['tag_role_worker-1'][0]]['ansible_host']  }}"
-          worker_2_endpoint: "{{ hostvars[groups['tag_role_worker-2'][0]]['ansible_host']  }}"
-          hello_world_service_endpoint: "http://{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}:8080"
+          # master_endpoint: "{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}"
+          # worker_1_endpoint: "{{ hostvars[groups['tag_role_worker-1'][0]]['ansible_host']  }}"
+          # worker_2_endpoint: "{{ hostvars[groups['tag_role_worker-2'][0]]['ansible_host']  }}"
+          api_endpoint: "https://{{ hostvars[groups['tag_role_master'][0]]['ansible_host']  }}:6443"
+          creds_encoded_file: "{{ creds_config_encoded_file.content }}" #it can be decoded by adding "| b64decode" to the var 
